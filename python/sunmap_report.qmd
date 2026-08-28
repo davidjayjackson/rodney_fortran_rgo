@@ -8,12 +8,12 @@ format:
     code-fold: true
 params:
   input_file: "../rgo_data_0508.prn"
-  beta: 50      # number of Umbra seen
-  delta: 0.3    # percentage of Umbra with Penumbra, per group
-  rr: 100       # number of total sunspots seen
-  g: 0.5        # percentage of sunspots in Umbra (gamma)
-  p: 0.4        # estimate percent of Umbra in groups (0 < P < 1.0)
-  k: 27         # estimate duration of Umbra in days (1 < K < 85)
+  beta: 80      # number of Umbra seen
+  delta: 0.6    # percentage of Umbra with Penumbra, per group
+  rr: 250       # number of total sunspots seen
+  g: 0.7        # percentage of sunspots in Umbra (gamma)
+  p: 0.2        # estimate percent of Umbra in groups (0 < P < 1.0)
+  k: 15         # estimate duration of Umbra in days (1 < K < 85)
 jupyter: python3
 ---
 
@@ -56,12 +56,12 @@ import sunmap
 # engine injects param overrides as plain variables into this cell
 # (unlike the R/knitr `params` list convention).
 input_file = "../rgo_data_0508.prn"
-beta = 50
-delta = 0.3
-rr = 100
-g = 0.5
-p = 0.4
-k = 27
+beta = 80
+delta = 0.6
+rr = 250
+g = 0.7
+p = 0.2
+k = 15
 ```
 
 ## Parameters
