@@ -1,0 +1,162 @@
+---
+title: "SUNMAP — Sunspot Evolution Model"
+subtitle: "Python port of the sunmap.f main loop + EXPO chain"
+format:
+  html:
+    toc: true
+    embed-resources: true
+    code-fold: true
+params:
+  input_file: "../rgo_data_0508.prn"
+  beta: 50      # number of Umbra seen
+  delta: 0.3    # percentage of Umbra with Penumbra, per group
+  rr: 100       # number of total sunspots seen
+  g: 0.5        # percentage of sunspots in Umbra (gamma)
+  p: 0.4        # estimate percent of Umbra in groups (0 < P < 1.0)
+  k: 27         # estimate duration of Umbra in days (1 < K < 85)
+jupyter: python3
+---
+
+## Scope
+
+This notebook runs the Python port of `sunmap.f`'s main record loop and
+EXPO evolution-model chain (`python/sunmap/`). Per project scope
+decision, it does **not** include:
+
+- the SPUR/ZCELLS polygon simulation (its required state files —
+  `POLYPARA.DAT`, `TIMENEW.DAT`, `TIMEOLD.DAT` — aren't in this repo;
+  see `python/sunmap/model.py` for how the call site is stubbed), or
+- the RNSTNR-driven "random data" mode (`RNSTNR` is never defined
+  anywhere in the original source tree).
+
+The original's interactive parameter prompts and "Continue (1), Stop
+(0)" batching loop are replaced by the `params` block above and a
+single pass over the whole input file.
+
+Source: [`sunmap.f`](../sunmap.f) · port: [`python/sunmap/`](sunmap/)
+
+```{python}
+#| label: setup
+#| echo: false
+import sys
+sys.path.insert(0, ".")
+
+import warnings
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import sunmap
+```
+
+```{python}
+#| label: parameters
+#| tags: [parameters]
+#| echo: false
+# Defaults here mirror the YAML `params:` block above; Quarto's Jupyter
+# engine injects param overrides as plain variables into this cell
+# (unlike the R/knitr `params` list convention).
+input_file = "../rgo_data_0508.prn"
+beta = 50
+delta = 0.3
+rr = 100
+g = 0.5
+p = 0.4
+k = 27
+```
+
+## Parameters
+
+```{python}
+#| label: params
+#| echo: false
+param_table = pd.DataFrame(
+    {"value": [beta, delta, rr, g, p, k]},
+    index=["beta (Umbra seen)", "delta (% Umbra w/ Penumbra)",
+           "rr (total sunspots seen)", "g (% sunspots in Umbra)",
+           "P (% Umbra in groups)", "K (Umbra duration, days)"],
+)
+param_table
+```
+
+## Input data
+
+```{python}
+#| label: read-data
+records = sunmap.read_prn(input_file)
+print(f"{len(records)} records read from {input_file}")
+records[:3]
+```
+
+## Run the model
+
+```{python}
+#| label: run-model
+model_params = sunmap.SunmapParams(
+    beta=beta, delta=delta, rr=rr, g=g, p=p, k=k,
+)
+
+with warnings.catch_warnings(record=True) as caught:
+    warnings.simplefilter("always")
+    rows = sunmap.process_batch(records, model_params)
+
+df = pd.DataFrame(rows)
+print(f"{len(df)} rows produced, {len(caught)} warnings raised during processing")
+df.head()
+```
+
+Warnings are raised for records where the ported formulas hit an
+undefined operation the original Fortran would also have hit (division
+by zero, `sqrt` of a negative number) — see `python/sunmap/model.py`
+and `expo.py` docstrings for exactly where these are guarded.
+
+```{python}
+#| label: warning-summary
+#| echo: false
+if caught:
+    reasons = pd.Series([str(w.message).split(":", 2)[-1].strip() for w in caught])
+    reasons.value_counts().to_frame("count")
+else:
+    print("No warnings raised for this input/parameter combination.")
+```
+
+## Results
+
+```{python}
+#| label: fig-susqi
+#| fig-cap: "SUSQI by day"
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.plot(df.index, df["SUSQI"], marker=".", linewidth=0.8)
+ax.set_xlabel("record index")
+ax.set_ylabel("SUSQI")
+fig.tight_layout()
+fig
+```
+
+```{python}
+#| label: fig-evolution
+#| fig-cap: "Evolution estimate (POSQ*SUSQS) by record"
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.plot(df.index, df["evolution"], marker=".", linewidth=0.8, color="darkorange")
+ax.set_xlabel("record index")
+ax.set_ylabel("evolution (POSQ*SUSQS)")
+fig.tight_layout()
+fig
+```
+
+```{python}
+#| label: fig-cua
+#| fig-cap: "CUA distribution"
+fig, ax = plt.subplots(figsize=(8, 4))
+df["CUA"].dropna().hist(bins=30, ax=ax)
+ax.set_xlabel("CUA")
+ax.set_ylabel("count")
+fig.tight_layout()
+fig
+```
+
+## Full output table
+
+```{python}
+#| label: full-table
+df
+```

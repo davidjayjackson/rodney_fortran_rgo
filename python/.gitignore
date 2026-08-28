@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+sunmap_report.html
+*.quarto_ipynb
