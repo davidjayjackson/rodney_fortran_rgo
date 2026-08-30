@@ -19,7 +19,7 @@ If that weren’t enough, here’s another fortran file that tries to “map’ 
 
 ### Record layout (`rgo_header.rtf`)
 
-The RTF layout describes `rgo_data-all.csv`'s 15 columns (`date,time,CSG,sufix,CGT,NOAA,QUA,OWSA,CUA,CWSA,DCSD,PAHN,CLD,LNS,CMD`) and they line up positionally field-for-field, era-dependent columns (Greenwich vs. NOAA/USAF numbering, group type) included. The one open item: the RTF gives no abbreviation for the "observed umbral area" field (cols 26–29), so `QUA` as its column name in the CSV isn't independently confirmed — everything else (`OWSA`, `CUA`, `CWSA`, `DCSD`, `PAHN`, `CLD`, `LNS`, `CMD`) matches the RTF description directly.
+The RTF layout describes `rgo_data-all.csv`'s 15 columns (`date,time,CSG,sufix,CGT,NOAA,CUA,OWSA,CUA,CWSA,DCSD,PAHN,CLD,LNS,CMD`) and they line up positionally field-for-field, era-dependent columns (Greenwich vs. NOAA/USAF numbering, group type) included. The RTF gives no abbreviation for the "observed umbral area" field (cols 26–29); per Rodney, there's no `QUA` column — that field is also `CUA`, so the CSV has two same-named `CUA` columns (observed umbral area at position 7, corrected umbral area at position 9). Everything else (`OWSA`, `CWSA`, `DCSD`, `PAHN`, `CLD`, `LNS`, `CMD`) matches the RTF description directly.
 
 ### `sunmap.f`
 
